@@ -23,6 +23,23 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool is_refreshing = false;
   event_loop el = new event_loop();
+
+  Color getColorByState(String state)
+  {
+    //global_detectors[pageIndex*4 + index]["state"] == "norm" ? Color.fromRGBO(255,255,255, 1) :Color.fromRGBO(227,60,100, 1)
+      switch(state)
+      {
+        case 'norm' :
+          return Color.fromRGBO(255,255,255, 1);
+        case 'warning':
+          return Color.fromRGBO(227,60,100, 1);
+        case 'death':
+          return Colors.grey;
+        default:
+          return Colors.yellow;
+      }
+  }
+
   void refresh()
   {
     {
@@ -234,7 +251,7 @@ class _HomePageState extends State<HomePage> {
                                       height: 12,
                                       decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          color: global_detectors[pageIndex*4 + index]["state"] == "norm" ? Color.fromRGBO(98,178,252, 1) :Color.fromRGBO(227,60,100, 1) ,
+                                          color: getColorByState(global_detectors[pageIndex*4 + index]["state"]),
                                       )
                                     ),
                                   ],
