@@ -179,7 +179,8 @@ class _addDetectorPageState extends State<addDetectorPage> {
                     });
                   });
                 }else{
-                  showDialog(
+                  if(context.mounted) {
+                    showDialog(
                     context: context,
                     builder: (BuildContext context) {
                       return AlertDialog(
@@ -206,6 +207,7 @@ class _addDetectorPageState extends State<addDetectorPage> {
                       );
                     },
                   );
+                  }
                   // 处理完成后启用按钮
                   setState(() {
                     isButtonEnabled = true;

@@ -1,12 +1,14 @@
 import 'dart:convert';
 
+import 'Global.dart';
+
 class packet
 {
   static String login(String username, String password)
   {
     final post = {
       'username': username,
-      'password' : password.hashCode,
+      'password' : generateMd5(password),
     };
     return json.encode(post);
   }
@@ -16,7 +18,7 @@ class packet
     final post = {
       'email': email,
       'username': username,
-      'password' : password.hashCode,
+      'password' : generateMd5(password),
     };
     return json.encode(post);
   }
@@ -59,6 +61,14 @@ class packet
   {
     final post = {
       'event_name': event_name,
+      'cam_source': cam_source,
+    };
+    return json.encode(post);
+  }
+
+  static String getNotification(String cam_source)
+  {
+    final post = {
       'cam_source': cam_source,
     };
     return json.encode(post);

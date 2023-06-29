@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:dondaApp/Detector.dart';
 import 'package:dondaApp/Login.dart';
 import 'package:dondaApp/addDetector.dart';
+import 'package:platform_local_notifications/platform_local_notifications.dart';
 import 'Global.dart';
 import 'Loop.dart';
 import 'Packet.dart';
@@ -45,7 +46,7 @@ class _HomePageState extends State<HomePage> {
     {
       if(is_refreshing) return;
       is_refreshing = true;
-      // 处理刷新按钮点击事件
+      // 处理刷新
       var url =
       Uri.http(global_detector_server_address, global_url_detector);
       http
@@ -64,10 +65,11 @@ class _HomePageState extends State<HomePage> {
               global_detectors = res["detectors"];
               for(int i = 0; i < global_detectors.length; i++)
               {
-                if(global_detectors[i]['image'] != null)
+                if(global_detectors[i]['image'] != null) {
                   global_detectors[i]['image_'] =  MemoryImage(base64Decode(global_detectors[i]['image']));
-                else
+                } else {
                   global_detectors[i]['image_'] = Image.network("https://www.itying.com/images/flutter/1.png").image;
+                }
               }
             });
             break;
@@ -104,6 +106,39 @@ class _HomePageState extends State<HomePage> {
           );
         }
       });
+      url =
+        Uri.http(global_detector_server_address, global_url_get_notification);
+      for(int i = 0; i < global_detectors.length; i++)
+      {
+        http
+            .post(url,
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+              'Authorization': global_user_info['token'],
+            },
+            body: packet.getNotification(global_detectors[i]['cam_source']))
+            .then((http.Response response) async {
+          final res = json.decode(response.body.toString());
+          print(res);
+          if(res['state'] == 1 || res['state'] == "1")
+          {
+            if (context.mounted) {
+              await PlatformNotifier.I.showPluginNotification(
+                  ShowPluginNotificationModel(
+                      id: DateTime.now().second,
+                      title: "消息提示",
+                      body: "检测到异常，状态：" + res['notification'],
+                      payload: "test"), context);
+            }
+          }
+
+        });
+      }
+
+
+
+
+
       is_refreshing = false;
     }
   }
@@ -114,7 +149,7 @@ class _HomePageState extends State<HomePage> {
   {
     refresh();
     Timer.periodic(Duration(seconds: 5), (timer) {
-      el.loop();
+      refresh();
     });
   }
 
@@ -218,7 +253,7 @@ class _HomePageState extends State<HomePage> {
                     child: InkWell(
                       onTap: () {
                         // Do something when the card is tapped
-                        print('Card '+ global_detectors[pageIndex*4 + index]["nickname"] +  ' tapped');
+                        print('${'Card '+ global_detectors[pageIndex*4 + index]["nickname"]} tapped');
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => DetectorPage()),
@@ -305,10 +340,6 @@ class _HomePageState extends State<HomePage> {
                   MaterialPageRoute(builder: (context) => addDetectorPage()),
                 );
               },
-              child: Text(
-                '添加监控区域',
-                style: TextStyle(color: Colors.white, fontSize: 30),
-              ),
               style: ButtonStyle(
                 backgroundColor: MaterialStateProperty.all(Color(0xFF62B2FC)),
                 shape: MaterialStateProperty.all(
@@ -321,6 +352,10 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
+              ),
+              child: Text(
+                '添加监控区域',
+                style: TextStyle(color: Colors.white, fontSize: 30),
               ),
             ),
           ),

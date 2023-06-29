@@ -1,5 +1,16 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'dart:convert';
+import 'package:convert/convert.dart';
+import 'package:crypto/crypto.dart';
+
+// md5 加密
+String generateMd5(String data) {
+  var content = Utf8Encoder().convert(data);
+  var digest = md5.convert(content);
+  return hex.encode(digest.bytes);
+}
+
 const String global_login_server_ip = "127.0.0.1";//"10.0.2.2"
 
 const String global_login_server_port = "8080";
@@ -22,7 +33,7 @@ const String global_url_add_detector = "/add_detector";
 
 const String global_url_del_event = "/del_event";
 
-
+const String global_url_get_notification = "/get_notification";
 
 // Create storage
 final global_storage = new FlutterSecureStorage();

@@ -1,9 +1,9 @@
 import 'dart:ui';
 
-import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:dondaApp/SignUp.dart';
+import 'package:platform_local_notifications/platform_local_notifications.dart';
 import 'Login.dart';
 
 class MyScrollBehavior extends MaterialScrollBehavior {
@@ -14,30 +14,11 @@ class MyScrollBehavior extends MaterialScrollBehavior {
   };
 }
 
+Future<void> main() async {
 
-void main() {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
-  AwesomeNotifications().initialize(
-    // set the icon to null if you want to use the default app icon
-      '',
-      [
-        NotificationChannel(
-            channelGroupKey: 'basic_channel_group',
-            channelKey: 'basic_channel',
-            channelName: 'Basic notifications',
-            channelDescription: 'Notification channel for basic tests',
-            defaultColor: Color(0xFF9D50DD),
-            ledColor: Colors.white)
-      ],
-      // Channel groups are only visual and are not required
-      channelGroups: [
-        NotificationChannelGroup(
-            channelGroupKey: 'basic_channel_group',
-            channelGroupName: 'Basic group')
-      ],
-      debug: true
-  );
+  await PlatformNotifier.I.init(appName: "dondaApp");
   runApp(const MyApp());
 }
 
@@ -105,15 +86,6 @@ class _MainPageState extends State<MainPage> {
                         MaterialPageRoute(builder: (context) => LoginPage()),
                       );
                     },
-                    child: Container(
-                      width: 170,
-                      height: 60,
-                      child: Center(
-                          child: Text(
-                        '登录',
-                        style: TextStyle(color: Colors.white, fontSize: 22),
-                      )),
-                    ),
                     style: ElevatedButton.styleFrom(
                         padding: EdgeInsets.zero,
                         shape: RoundedRectangleBorder(
@@ -123,6 +95,15 @@ class _MainPageState extends State<MainPage> {
                           ),
                         ),
                         backgroundColor: Colors.black),
+                    child: Container(
+                      width: 170,
+                      height: 60,
+                      child: Center(
+                          child: Text(
+                        '登录',
+                        style: TextStyle(color: Colors.white, fontSize: 22),
+                      )),
+                    ),
                   ),
                   ElevatedButton(
                     onPressed: () {
@@ -131,15 +112,6 @@ class _MainPageState extends State<MainPage> {
                         MaterialPageRoute(builder: (context) => SignUpPage()),
                       );
                     },
-                    child: Container(
-                      width: 170,
-                      height: 60,
-                      child: Center(
-                          child: Text(
-                        '注册',
-                        style: TextStyle(color: Colors.black, fontSize: 22),
-                      )),
-                    ),
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
@@ -148,6 +120,15 @@ class _MainPageState extends State<MainPage> {
                           bottomRight: Radius.circular(15),
                         ),
                       ),
+                    ),
+                    child: Container(
+                      width: 170,
+                      height: 60,
+                      child: Center(
+                          child: Text(
+                        '注册',
+                        style: TextStyle(color: Colors.black, fontSize: 22),
+                      )),
                     ),
                   ),
                 ],
