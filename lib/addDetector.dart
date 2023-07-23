@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -21,18 +22,48 @@ class _addDetectorPageState extends State<addDetectorPage> {
   bool isButtonEnabled = true;
 
   bool validateRTSPAddress(String address) {
-    // RTSP地址的正则表达式
-    const pattern = r'rtsp:\\/\\/[0-9a-zA-Z]*:[0-9a-zA-Z]*@((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})(\\.((2(5[0-5]|[0-4]\\d))|[0-1]?\\d{1,2})){3}:[0-9]*\\/[a-zA-Z0-9]*';
+    // RTSP地址的正则表达式（不包含用户名和密码）
+    const pattern = r'rtsp:\/\/((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})(\.((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})){3}:[0-9]*\/[a-zA-Z0-9]*';
     final regExp = RegExp(pattern);
     return regExp.hasMatch(address);
   }
 
+
   Future<bool> checkRTSPConnectivity(String address) async {
+    // 解析地址中的主机和端口
+    String rtspHost = address.split("://")[1].split(":")[0];
+    int rtspPort = int.parse(address.split("://")[1].split(":")[1].split("/")[0]);
+
+    // 创建一个socket对象
+    Socket? socket;
+
     try {
-      final response = await http.head(Uri.parse(address));
-      return response.statusCode == 200;
+      // 尝试连接到rtsp服务器
+      socket = await Socket.connect(rtspHost, rtspPort);
+
+      // 定义一个rtsp请求的消息
+      String message = "OPTIONS $address RTSP/1.0\r\nCSeq: 1\r\nUser-Agent: Dart\r\n\r\n";
+
+      // 发送请求
+      socket.write(message);
+
+      // 接收响应
+      String response = await utf8.decoder.bind(socket).first;
+
+      // 判断响应是否为200 OK
+      if (response.startsWith("RTSP/1.0 200 OK")) {
+        // 返回true表示连通
+        return true;
+      } else {
+        // 返回false表示不连通
+        return false;
+      }
     } catch (e) {
+      // 如果发生异常，返回false表示不连通
       return false;
+    } finally {
+      // 关闭socket
+      socket?.destroy();
     }
   }
 
@@ -106,6 +137,7 @@ class _addDetectorPageState extends State<addDetectorPage> {
                 setState(() {
                   isButtonEnabled = false; // 禁用按钮
                 });
+                print(cam_source_controller.text);
                 final isAddressValid = validateRTSPAddress(cam_source_controller.text);
                 bool isConnected = false;
                 if (isAddressValid) {
@@ -189,7 +221,7 @@ class _addDetectorPageState extends State<addDetectorPage> {
                           style: TextStyle(fontSize: 15),
                         ),
                         content: Text(
-                          isAddressValid ? "地址不合法" : "连接摄像头失败",
+                          isAddressValid ? "连接摄像头失败" : "地址不合法",
                           style: TextStyle(fontSize: 25),
                         ),
                         actions: <Widget>[
