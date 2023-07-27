@@ -35,9 +35,11 @@ const String global_url_del_event = "/del_event";
 
 const String global_url_get_notification = "/get_notification";
 
-const String global_url_video_feed = "/video_feed";
+const String global_url_keep_video = "/keep_video";
 
 const String global_url_open_video = "/open_video";
+
+const String global_url_add_video_reminder = "/add_video_reminder";
 
 // Create storage
 final global_storage = new FlutterSecureStorage();

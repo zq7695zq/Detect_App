@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
 
+import 'package:dondaApp/Stream.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:dondaApp/EventView.dart';
-import 'package:dondaApp/Live.dart';
 import 'Global.dart';
 import 'Packet.dart';
 
@@ -87,30 +87,29 @@ class _DetectorPageState extends State<DetectorPage> {
               ),
             ),
           ),
-          SizedBox(height: 20),
-          // 第三行：按钮1
+          SizedBox(height: 10),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => LivePage()),
+                MaterialPageRoute(builder: (context) => Stream()),
               );
             },
             child: Container(
-              height: 60,
+              height: 40,
               child: FractionallySizedBox(
                 widthFactor: 0.8, // 设置宽度占父容器宽度的比例（50%）
                 child: Center(
                   child: Text(
-                    '进入监控画面',
+                    '物品/区域管理',
                     style: TextStyle(color: Colors.white, fontSize: 22),
                   ),
                 ),
               ),
             ),
           ),
-          SizedBox(height: 20),
+          SizedBox(height: 5),
           // 第四行：按钮2
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
@@ -174,7 +173,7 @@ class _DetectorPageState extends State<DetectorPage> {
               });
             },
             child: Container(
-              height: 60,
+              height: 40,
               child: FractionallySizedBox(
                 widthFactor: 0.8, // 设置宽度占父容器宽度的比例（50%）
                 child: Center(
