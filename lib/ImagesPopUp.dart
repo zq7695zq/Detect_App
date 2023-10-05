@@ -23,17 +23,20 @@ class _ImagesPopupState extends State<ImagesPopup> with SingleTickerProviderStat
 
     super.initState();
     _disposed = false;
-    this.base64Images = global_event_frames[global_current_event_name];
+    base64Images = global_event_frames[global_current_event_uuid];
     images = [];
-    for(var b in this.base64Images!)
+    for(var b in base64Images!)
     {
       images?.add(Image.memory(
         base64Decode(b),
         key: UniqueKey(), // Use a unique key associated with the image data
       ));
     }
+
+    int timePerImageInMilliseconds = (4000 / images!.length).round();
+
     Future.delayed(Duration(milliseconds: 200), () {
-      _updateImage(images!.length, Duration(milliseconds: 40));
+      _updateImage(images!.length, Duration(milliseconds: timePerImageInMilliseconds));
     });
   }
 
@@ -60,7 +63,7 @@ class _ImagesPopupState extends State<ImagesPopup> with SingleTickerProviderStat
     return Center(
       child: IndexedStack(
         index: _index,
-        children: this.images!,
+        children: images!,
       ),
     );
   }

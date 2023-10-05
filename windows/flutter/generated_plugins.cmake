@@ -3,10 +3,12 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  awesome_notifications
   flutter_secure_storage_windows
+  local_notifier
   media_kit_libs_windows_video
   media_kit_video
+  record_windows
+  screen_brightness_windows
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

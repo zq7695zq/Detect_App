@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:dondaApp/SignUp.dart';
 import 'package:platform_local_notifications/platform_local_notifications.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'Login.dart';
 
 class MyScrollBehavior extends MaterialScrollBehavior {
@@ -38,6 +39,7 @@ class MyApp extends StatelessWidget {
       ),
       home: const MainPage(title: 'Home Page'),
       scrollBehavior: MyScrollBehavior(),
+      builder: EasyLoading.init(),
     );
   }
 }

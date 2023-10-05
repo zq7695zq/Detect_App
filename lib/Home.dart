@@ -1,18 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:dondaApp/Detector.dart';
 import 'package:dondaApp/Login.dart';
 import 'package:dondaApp/addDetector.dart';
-import 'package:platform_local_notifications/platform_local_notifications.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
 import 'Global.dart';
 import 'Loop.dart';
 import 'Packet.dart';
-
-
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,22 +20,21 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool is_refreshing = false;
-  event_loop el = new event_loop();
+  event_loop el = event_loop();
+  final Stopwatch _stopwatch = Stopwatch();
 
-  Color getColorByState(String state)
-  {
+  Color getColorByState(String state) {
     //global_detectors[pageIndex*4 + index]["state"] == "norm" ? Color.fromRGBO(255,255,255, 1) :Color.fromRGBO(227,60,100, 1)
-      switch(state)
-      {
-        case 'norm' :
-          return Color.fromRGBO(255,255,255, 1);
-        case 'warning':
-          return Color.fromRGBO(227,60,100, 1);
-        case 'death':
-          return Colors.grey;
-        default:
-          return Colors.yellow;
-      }
+    switch (state) {
+      case 'norm':
+        return Color.fromRGBO(255, 255, 255, 1);
+      case 'warning':
+        return Color.fromRGBO(227, 60, 100, 1);
+      case 'death':
+        return Colors.grey;
+      default:
+        return Colors.yellow;
+    }
   }
 
   void refresh()
@@ -57,19 +53,24 @@ class _HomePageState extends State<HomePage> {
           },
           body: packet.detector(global_user_info['username']))
           .then((http.Response response) {
+            if(response.body.toString().isEmpty)return;
         final res = json.decode(response.body.toString());
         String _content = "";
         switch (res["state"]) {
           case 'detector_get_success':
             setState(() {
               global_detectors = res["detectors"];
-              for(int i = 0; i < global_detectors.length; i++)
-              {
-                if(global_detectors[i]['image'] != null) {
-                  global_detectors[i]['image_'] =  MemoryImage(base64Decode(global_detectors[i]['image']));
+              for(int i = 0; i < global_detectors.length; i++) {
+                if (global_detectors[i]['image'] != null) {
+                  global_detectors[i]['image_'] =
+                      MemoryImage(base64Decode(global_detectors[i]['image']));
                 } else {
-                  global_detectors[i]['image_'] = Image.network("https://www.itying.com/images/flutter/1.png").image;
+                  global_detectors[i]['image_'] = Image.network(
+                          "https://www.itying.com/images/flutter/1.png")
+                      .image;
                 }
+                global_detectors[i]['nickname'] =
+                    utf8.decode(base64.decode(global_detectors[i]['nickname']));
               }
             });
             break;
@@ -118,27 +119,30 @@ class _HomePageState extends State<HomePage> {
             },
             body: packet.getNotification(global_detectors[i]['cam_source']))
             .then((http.Response response) async {
+          if (response.body.toString().isEmpty) {
+            return;
+          }
           final res = json.decode(response.body.toString());
           print(res);
-          if(res['state'] == 1 || res['state'] == "1")
-          {
+          if (res['state'] == 1 || res['state'] == "1") {
             if (context.mounted) {
-              await PlatformNotifier.I.showPluginNotification(
-                  ShowPluginNotificationModel(
-                      id: DateTime.now().second,
-                      title: "消息提示",
-                      body: "检测到异常，状态：" + res['notification'],
-                      payload: "test"), context);
+              if ((_stopwatch.isRunning && _stopwatch.elapsed.inSeconds > 15) ||
+                  !_stopwatch.isRunning) {
+                _stopwatch.reset();
+                _stopwatch.start();
+                // await PlatformNotifier.I.showPluginNotification(
+                //     ShowPluginNotificationModel(
+                //         id: DateTime.now().second,
+                //         title: "消息提示",
+                //         body: "检测到异常，状态：" + res['notification'],
+                //         payload: "test"),
+                //     context);
+              }
             }
           }
 
         });
       }
-
-
-
-
-
       is_refreshing = false;
     }
   }
@@ -152,7 +156,6 @@ class _HomePageState extends State<HomePage> {
       refresh();
     });
   }
-
 
   @override
   Widget build(BuildContext context) {

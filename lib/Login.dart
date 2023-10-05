@@ -116,6 +116,9 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     body: packet.login(username_controller.text, password_controller.text))
                     .then((http.Response response){
+                      if (response.body.toString().isEmpty) {
+                        return;
+                      }
                       final res = json.decode(response.body.toString());
                       String _content = "";
                       switch(res['state'])
@@ -127,7 +130,7 @@ class _LoginPageState extends State<LoginPage> {
                           global_user_info['email'] = res['user']['email'];
                           global_user_info['username'] = username_controller.text;
                           global_user_info['token'] = res['token'];
-                          global_detector_server_address = res['server']['server_ip'] + ":" + res['server']['server_port'];
+                          global_detector_server_address =  res['server']['server_port'].toString().isEmpty ? res['server']['server_ip'] : res['server']['server_ip'] + ":" + res['server']['server_port'];
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(builder: (context) => HomePage()),
                           );

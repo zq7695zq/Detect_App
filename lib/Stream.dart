@@ -1,18 +1,21 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:dondaApp/RecordPopupDialog.dart';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
+import 'package:platform_local_notifications/platform_local_notifications.dart';
+import 'package:record/record.dart';
 
 import 'FullScreenScreenshot.dart';
 import 'Global.dart';
-import 'package:flutter/material.dart';
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
-
+import 'Packet.dart';
 import 'ReminderDialog.dart';
-
 
 class Stream extends StatefulWidget {
   const Stream({super.key});
@@ -20,43 +23,65 @@ class Stream extends StatefulWidget {
   @override
   State<Stream> createState() => _StreamPageState();
 }
-class _StreamPageState extends State<Stream> {
-  late final player = Player();
-  late final controller = VideoController(player);
-  late Uint8List? screenshot;
-  late Timer _timer;
 
+class _StreamPageState extends State<Stream> {
+  late final Player player = Player();
+  late final VideoController controller = VideoController(
+    player,
+    configuration: const VideoControllerConfiguration(
+      // NOTE:
+      androidAttachSurfaceAfterVideoParameters: false,
+    ),
+  );
+  late Uint8List? screenshot;
+  late Timer _timer_keep_stream;
+
+  bool is_checking_recording = false;
+  bool is_recording = false;
+  late OverlayEntry _overlayEntry;
+
+  late Record record = Record();
+  late Timer _timer_check_recording;
 
   @override
   void initState() {
-    const timeInterval = Duration(seconds: 5);
-    var url = Uri.http(
-        global_detector_server_address
-        , global_url_open_video
-        , {"cam_source": global_current_detector['cam_source']});
-    http.get(url,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': global_user_info['token'],
+    var url = Uri.http(global_detector_server_address, global_url_open_video,
+        {"cam_source": global_current_detector['cam_source']});
+    http.get(url, headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+      'Authorization': global_user_info['token'],
+    }).then((http.Response response) async {
+      final res = json.decode(response.body.toString());
+      print(res);
+      if (res['success'] == true && res['address'].toString().isNotEmpty) {
+        print("尝试打开rtsp流：$res['address']");
+        player.open(Media(res['address']));
+        _timer_check_recording = Timer.periodic(Duration(seconds: 2), (timer) {
+          checkRecording();
         });
-    _timer = Timer.periodic(timeInterval , (timer){
-      var url = Uri.http(
-          global_detector_server_address
-          , global_url_keep_video
-          , {"cam_source": global_current_detector['cam_source']});
-      http.get(url,
-          headers: <String, String>{
+        _timer_keep_stream = Timer.periodic(Duration(seconds: 10), (timer) {
+          var url = Uri.http(
+              global_detector_server_address,
+              global_url_keep_video,
+              {"cam_source": global_current_detector['cam_source']});
+          http.get(url, headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
             'Authorization': global_user_info['token'],
           });
+        });
+      }
     });
-    player.open(Media(global_current_detector['cam_source'] + "_stream_from_server"));
-
+    _overlayEntry = _createOverlayEntry();
   }
 
   @override
   void dispose() {
-    _timer.cancel();
+    if (_timer_keep_stream != null) {
+      _timer_keep_stream.cancel();
+    }
+    if (_timer_check_recording != null) {
+      _timer_check_recording.cancel();
+    }
     player.dispose();
     super.dispose();
   }
@@ -66,69 +91,256 @@ class _StreamPageState extends State<Stream> {
     return Scaffold(
       appBar: AppBar(
         title: Text('监控画面'),
-      ),
-      body:
-      // Wrap [Video] widget with [MaterialDesktopVideoControlsTheme].
-      MaterialDesktopVideoControlsTheme(
-        normal: MaterialDesktopVideoControlsThemeData(
+      ), body:
+          // Wrap [Video] widget with [MaterialVideoControlsTheme].
+    Platform.isAndroid ? MaterialVideoControlsTheme(
+        normal: MaterialVideoControlsThemeData(
           // Modify theme options:
           seekBarThumbColor: Colors.blue,
           seekBarPositionColor: Colors.blue,
-          toggleFullscreenOnDoublePress: false,
+          displaySeekBar: false,
           // Modify bottom button bar:
           bottomButtonBar: [
             Spacer(),
-            MaterialDesktopPlayOrPauseButton(),
-            MaterialDesktopCustomButton(
+            MaterialCustomButton(
               onPressed: () async {
-                controller.player.pause();
+                // controller.player.pause();
                 screenshot = await player.screenshot();
                 // Show the screenshot in fullscreen mode
-                if(screenshot == null)
-                {
+                if (screenshot == null) {
                   controller.player.play();
-                }else
-                {
+                } else {
                   Map<String, dynamic> ret = await showDialog(
                     context: context,
                     builder: (BuildContext context) {
                       return ReminderDialog();
                     },
                   );
-                  if(ret['state'] == 'success')
-                  {
-                    var result = await Navigator.push(context, MaterialPageRoute(builder: (context) => FullScreenScreenshot(screenshot)));
-                    if(result != null)
-                    {
-                      sendScreenshotAndResult(screenshot!, result, global_current_detector['cam_source'], ret['time'], ret['text']);
+                  if (ret['state'] == 'success') {
+                    var result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                FullScreenScreenshot(screenshot)));
+                    if (result != null) {
+                      sendScreenshotAndResult(
+                          screenshot!,
+                          result,
+                          global_current_detector['cam_source'],
+                          ret['time'],
+                          ret['text']);
                     }
                   }
-
                 }
               },
               icon: Icon(Icons.add_alert),
             ),
-            MaterialDesktopCustomButton(
+            MaterialCustomButton(
               onPressed: () async {
                 controller.player.pause();
                 screenshot = await player.screenshot();
               },
               icon: Icon(Icons.security),
             ),
+            MaterialCustomButton(
+              onPressed: () async {
+                showRecordPopupDialog(context);
+              },
+              icon: Icon(Icons.record_voice_over_outlined),
+            ),
             Spacer(),
+            MaterialFullscreenButton(),
           ],
         ),
-        fullscreen: const MaterialDesktopVideoControlsThemeData(),
+        fullscreen: MaterialVideoControlsThemeData(
+          bottomButtonBar: [
+            Spacer(),
+            MaterialCustomButton(
+              onPressed: () async {
+                controller.player.pause();
+                screenshot = await player.screenshot();
+                // Show the screenshot in fullscreen mode
+                if (screenshot == null) {
+                  controller.player.play();
+                } else {
+                  Map<String, dynamic> ret = await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return ReminderDialog();
+                    },
+                  );
+                  if (ret['state'] == 'success') {
+                    var result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                FullScreenScreenshot(screenshot)));
+                    if (result != null) {
+                      sendScreenshotAndResult(
+                          screenshot!,
+                          result,
+                          global_current_detector['cam_source'],
+                          ret['time'],
+                          ret['text']);
+                    }
+                  }
+                }
+              },
+              icon: Icon(Icons.add_alert),
+            ),
+            MaterialCustomButton(
+              onPressed: () async {
+                controller.player.pause();
+                screenshot = await player.screenshot();
+              },
+              icon: Icon(Icons.security),
+            ),
+            MaterialCustomButton(
+              onPressed: () async {
+                showRecordPopupDialog(context);
+              },
+              icon: Icon(Icons.record_voice_over_outlined),
+            ),
+            Spacer(),
+            MaterialFullscreenButton(),
+          ],
+        ),
         child: Scaffold(
-          body: Video(
+          body: SizedBox(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.width * 0.5625,
+            child: Video(
+              controller: controller,
+            ),
+          ),
+        ),
+      ) : MaterialDesktopVideoControlsTheme(
+      normal: MaterialDesktopVideoControlsThemeData(
+        // Modify theme options:
+        seekBarThumbColor: Colors.blue,
+        seekBarPositionColor: Colors.blue,
+        displaySeekBar: false,
+        // Modify bottom button bar:
+        bottomButtonBar: [
+          Spacer(),
+          MaterialCustomButton(
+            onPressed: () async {
+              controller.player.pause();
+              screenshot = await player.screenshot();
+              // Show the screenshot in fullscreen mode
+              if (screenshot == null) {
+                controller.player.play();
+              } else {
+                Map<String, dynamic> ret = await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return ReminderDialog();
+                  },
+                );
+                if (ret['state'] == 'success') {
+                  var result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              FullScreenScreenshot(screenshot)));
+                  if (result != null) {
+                    sendScreenshotAndResult(
+                        screenshot!,
+                        result,
+                        global_current_detector['cam_source'],
+                        ret['time'],
+                        ret['text']);
+                  }
+                }
+              }
+            },
+            icon: Icon(Icons.add_alert),
+          ),
+          MaterialCustomButton(
+            onPressed: () async {
+              controller.player.pause();
+              screenshot = await player.screenshot();
+            },
+            icon: Icon(Icons.security),
+          ),
+          MaterialCustomButton(
+            onPressed: () async {
+              showRecordPopupDialog(context);
+            },
+            icon: Icon(Icons.record_voice_over_outlined),
+          ),
+          Spacer(),
+          MaterialFullscreenButton(),
+        ],
+      ),
+      fullscreen: MaterialDesktopVideoControlsThemeData(
+        bottomButtonBar: [
+          Spacer(),
+          MaterialCustomButton(
+            onPressed: () async {
+              controller.player.pause();
+              screenshot = await player.screenshot();
+              // Show the screenshot in fullscreen mode
+              if (screenshot == null) {
+                controller.player.play();
+              } else {
+                Map<String, dynamic> ret = await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return ReminderDialog();
+                  },
+                );
+                if (ret['state'] == 'success') {
+                  var result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              FullScreenScreenshot(screenshot)));
+                  if (result != null) {
+                    sendScreenshotAndResult(
+                        screenshot!,
+                        result,
+                        global_current_detector['cam_source'],
+                        ret['time'],
+                        ret['text']);
+                  }
+                }
+              }
+            },
+            icon: Icon(Icons.add_alert),
+          ),
+          MaterialCustomButton(
+            onPressed: () async {
+              controller.player.pause();
+              screenshot = await player.screenshot();
+            },
+            icon: Icon(Icons.security),
+          ),
+          MaterialCustomButton(
+            onPressed: () async {
+              showRecordPopupDialog(context);
+            },
+            icon: Icon(Icons.record_voice_over_outlined),
+          ),
+          Spacer(),
+          MaterialFullscreenButton(),
+        ],
+      ),
+      child: Scaffold(
+        body: SizedBox(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.width * 0.5625,
+          child: Video(
             controller: controller,
           ),
         ),
       ),
+    ),
     );
   }
 
-  void sendScreenshotAndResult(Uint8List frame, List<Offset> rect, String camSource, String selectTime, String reminderName) async {
+  void sendScreenshotAndResult(Uint8List frame, List<Offset> rect,
+      String camSource, String selectTime, String reminderName) async {
     // Convert Uint8List to base64-encoded string
     String frameBase64 = base64Encode(frame);
 
@@ -150,18 +362,22 @@ class _StreamPageState extends State<Stream> {
 
     print(jsonPayload);
     // Replace 'your-fastapi-endpoint' with the actual URL of your FastAPI endpoint
-    Uri url =  Uri.http(global_detector_server_address, global_url_add_video_reminder);
+    Uri url =
+        Uri.http(global_detector_server_address, global_url_add_video_reminder);
 
     try {
       // Send the POST request to the FastAPI endpoint
       http.Response response = await http.post(url,
-          headers: {'Content-Type': 'application/json',
-            'Authorization': global_user_info['token'],},
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': global_user_info['token'],
+          },
           body: jsonPayload);
 
       if (response.statusCode == 200) {
         print('Data sent successfully.');
-        player.seek(player.state.buffer);
+        // TODO SEEK有问题？
+        //player.seek(player.state.buffer);
       } else {
         print('Failed to send data. Status code: ${response.statusCode}');
       }
@@ -169,6 +385,7 @@ class _StreamPageState extends State<Stream> {
       print('Error sending data: $e');
     }
   }
+
   List<int> calculateBoundingBox(List<Offset> rect) {
     double minX = double.infinity;
     double minY = double.infinity;
@@ -190,4 +407,77 @@ class _StreamPageState extends State<Stream> {
     return [minX.toInt(), minY.toInt(), width.toInt(), height.toInt()];
   }
 
+  void checkRecording() {
+    if (is_checking_recording || is_recording) return;
+    print('checkRecording');
+    is_checking_recording = true;
+    var url = Uri.http(global_detector_server_address, global_url_is_recording);
+    for (int i = 0; i < global_detectors.length; i++) {
+      http
+          .post(url,
+              headers: <String, String>{
+                'Content-Type': 'application/json; charset=UTF-8',
+                'Authorization': global_user_info['token'],
+              },
+              body: packet.isRecording(global_detectors[i]['cam_source']))
+          .then((http.Response response) async {
+        if (response.body.toString().isEmpty) return;
+
+        Map<String, dynamic> res = json.decode(response.body.toString());
+        print(res);
+        if (res.containsKey("state") && res['state'] == true) {
+          is_recording = true;
+          // 十秒后才能继续测试
+          Future.delayed(Duration(seconds: 15), () {
+            is_recording = false;
+          });
+          // _showOverlay();
+          var outPutFileName = await getTempFilename();
+          if (!await record.hasPermission()) {
+            return;
+          }
+          await record.start(path: outPutFileName, encoder: AudioEncoder.wav);
+          Future.delayed(Duration(seconds: 4), () async {
+            // _hideOverlay(); // 加载完成后隐藏Overlay
+            await record.stop();
+            await record.dispose();
+            record = Record();
+            String ret =
+                await uploadVoice(outPutFileName, global_url_detect_record, {});
+            print(ret);
+            Map<String, dynamic> detect_res = json.decode(ret);
+            if (detect_res.containsKey("state") &&
+                detect_res['state'] == true) {
+              await PlatformNotifier.I.showPluginNotification(
+                  ShowPluginNotificationModel(
+                      id: DateTime.now().second,
+                      title: "消息提示",
+                      body: "接收到语音指令：" + detect_res['name'],
+                      payload: "test"),
+                  context);
+            }
+          });
+        }
+      });
+    }
+    is_checking_recording = false;
+  }
+
+  // 创建OverlayEntry
+  OverlayEntry _createOverlayEntry() {
+    return OverlayEntry(
+      builder: (context) => Stack(
+        alignment: Alignment.center,
+        children: [
+          Center(
+            child: CircularProgressIndicator(),
+          ),
+          Text(
+            '录音中，等待说出指令····',
+            style: TextStyle(fontSize: 18.0),
+          ),
+        ],
+      ),
+    );
+  }
 }

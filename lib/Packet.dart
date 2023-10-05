@@ -66,8 +66,14 @@ class packet
     return json.encode(post);
   }
 
-  static String getNotification(String cam_source)
-  {
+  static String getNotification(String cam_source) {
+    final post = {
+      'cam_source': cam_source,
+    };
+    return json.encode(post);
+  }
+
+  static String isRecording(String cam_source) {
     final post = {
       'cam_source': cam_source,
     };

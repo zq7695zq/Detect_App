@@ -1,8 +1,8 @@
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import 'dart:convert';
+
 import 'package:convert/convert.dart';
 import 'package:crypto/crypto.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 // md5 加密
 String generateMd5(String data) {
@@ -11,11 +11,11 @@ String generateMd5(String data) {
   return hex.encode(digest.bytes);
 }
 
-const String global_login_server_ip = "127.0.0.1";//"10.0.2.2"
+const String global_login_server_ip = "donda_login.cpolar.top";//"10.0.2.2"
 
-const String global_login_server_port = "8080";
+const String global_login_server_port = "";
 
-const String global_server_address = global_login_server_ip + ":" + global_login_server_port;
+const String global_server_address = global_login_server_ip;
 
 String global_detector_server_address = "";
 
@@ -41,6 +41,12 @@ const String global_url_open_video = "/open_video";
 
 const String global_url_add_video_reminder = "/add_video_reminder";
 
+const String global_url_upload_record = "/upload_record";
+
+const String global_url_detect_record = "/detect_record";
+
+const String global_url_is_recording = "/is_recording";
+
 // Create storage
 final global_storage = new FlutterSecureStorage();
 
@@ -58,5 +64,5 @@ var global_current_detector;
 
 Map<String, List<String>> global_event_frames = {}; // name - > frames
 
-String global_current_event_name = "";
+String global_current_event_uuid = "";
 

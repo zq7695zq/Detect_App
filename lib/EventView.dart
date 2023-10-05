@@ -2,11 +2,12 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:http/http.dart' as http;
 import 'package:dondaApp/ImagesPopUp.dart';
+import 'package:intl/intl.dart';
 import 'Global.dart';
 import 'Packet.dart';
-import 'package:intl/intl.dart';
 
 class EventViewPage extends StatefulWidget {
   const EventViewPage({super.key});
@@ -87,10 +88,9 @@ class _EventViewPageState extends State<EventViewPage> {
                   DateTime.fromMillisecondsSinceEpoch(
                       (double.parse(global_events[index]['time']) * 1000)
                           .toInt()))),
-              title: Text(global_events[index]['event'].toString()),
+              title: Text(utf8.decode(base64Decode(global_events[index]['event_name']))),
               onTap: () {
-                // 在这里添加点击事件的处理逻辑
-                //cam2events
+                EasyLoading.show(status: 'loading...', maskType: EasyLoadingMaskType.black);
                 var url = Uri.http(
                     global_detector_server_address, global_url_get_event_frames);
                 http
@@ -102,10 +102,11 @@ class _EventViewPageState extends State<EventViewPage> {
                         body:
                             packet.getEventFrames(global_events[index]['name']))
                     .then((http.Response response) {
+                      print("global_url_get_event_frames");
                   Map<String, dynamic> res =
                       json.decode(response.body.toString());
-                  global_current_event_name = global_events[index]['name'];
-                  global_event_frames[global_current_event_name] =
+                  global_current_event_uuid = global_events[index]['name'];
+                  global_event_frames[global_current_event_uuid] =
                       res['events'].cast<String>();
                   showDialog(
                     context: context,
@@ -115,6 +116,7 @@ class _EventViewPageState extends State<EventViewPage> {
                       );
                     },
                   );
+                  EasyLoading.dismiss();
                 });
               },
             ),

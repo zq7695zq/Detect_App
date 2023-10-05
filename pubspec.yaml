@@ -38,22 +38,29 @@ dependencies:
 
   http: ^0.13.4
 
-  media_kit: ^1.1.0                              # Primary package.
+#  media_kit: ^1.1.0                              # Primary package.
+#
+#  media_kit_video: ^1.1.0                        # For video rendering.
+#
+#  media_kit_native_event_loop: ^1.0.6            # Support for higher number of concurrent instances & better performance.
+#
+#  media_kit_libs_android_video: ^1.2.0           # Android package for video native libraries.
+#  media_kit_libs_ios_video: ^1.0.5               # iOS package for video native libraries.
+#  media_kit_libs_macos_video: ^1.0.6             # macOS package for video native libraries.
+#  media_kit_libs_windows_video: ^1.0.4           # Windows package for video native libraries.
+#  media_kit_libs_linux: ^1.0.2                   # GNU/Linux dependency package.              # GNU/Linux dependency package.
 
-  media_kit_video: ^1.1.0                        # For video rendering.
-
-  media_kit_native_event_loop: ^1.0.6            # Support for higher number of concurrent instances & better performance.
-
-  media_kit_libs_android_video: ^1.2.0           # Android package for video native libraries.
-  media_kit_libs_ios_video: ^1.0.5               # iOS package for video native libraries.
-  media_kit_libs_macos_video: ^1.0.6             # macOS package for video native libraries.
-  media_kit_libs_windows_video: ^1.0.4           # Windows package for video native libraries.
-  media_kit_libs_linux: ^1.0.2                   # GNU/Linux dependency package.              # GNU/Linux dependency package.
-
-  web_socket_channel: ^2.0.0
-  image: ^4.0.17
+  media_kit: ^1.1.8                              # Primary package.
+  media_kit_video: ^1.2.1                        # For video rendering.
+  media_kit_libs_video: ^1.0.3                   # Native video dependencies.
 
   intl: ^0.18.1
+
+  record: ^4.4.4
+
+  path: ^1.8.3
+
+  path_provider: ^2.0.15
 
 #  awesome_notifications: ^0.7.4+1
 
@@ -63,6 +70,7 @@ dependencies:
   platform_local_notifications: ^0.0.4
 
 #  awesome_notifications: ^0.7.4+1
+  flutter_easyloading: ^3.0.5
 
 dev_dependencies:
   flutter_test:
