@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
@@ -11,10 +10,12 @@ import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:platform_local_notifications/platform_local_notifications.dart';
 import 'package:record/record.dart';
+import 'package:path/path.dart' as p;
 
 import 'FullScreenScreenshot.dart';
 import 'Global.dart';
 import 'Packet.dart';
+import 'RecordList.dart';
 import 'ReminderDialog.dart';
 
 class Stream extends StatefulWidget {
@@ -91,254 +92,121 @@ class _StreamPageState extends State<Stream> {
     return Scaffold(
       appBar: AppBar(
         title: Text('监控画面'),
-      ), body:
-          // Wrap [Video] widget with [MaterialVideoControlsTheme].
-    Platform.isAndroid ? MaterialVideoControlsTheme(
-        normal: MaterialVideoControlsThemeData(
-          // Modify theme options:
-          seekBarThumbColor: Colors.blue,
-          seekBarPositionColor: Colors.blue,
-          displaySeekBar: false,
-          // Modify bottom button bar:
-          bottomButtonBar: [
-            Spacer(),
-            MaterialCustomButton(
-              onPressed: () async {
-                // controller.player.pause();
-                screenshot = await player.screenshot();
-                // Show the screenshot in fullscreen mode
-                if (screenshot == null) {
-                  controller.player.play();
-                } else {
-                  Map<String, dynamic> ret = await showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return ReminderDialog();
-                    },
-                  );
-                  if (ret['state'] == 'success') {
-                    var result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                FullScreenScreenshot(screenshot)));
-                    if (result != null) {
-                      sendScreenshotAndResult(
-                          screenshot!,
-                          result,
-                          global_current_detector['cam_source'],
-                          ret['time'],
-                          ret['text']);
-                    }
-                  }
-                }
-              },
-              icon: Icon(Icons.add_alert),
-            ),
-            MaterialCustomButton(
-              onPressed: () async {
-                controller.player.pause();
-                screenshot = await player.screenshot();
-              },
-              icon: Icon(Icons.security),
-            ),
-            MaterialCustomButton(
-              onPressed: () async {
-                showRecordPopupDialog(context);
-              },
-              icon: Icon(Icons.record_voice_over_outlined),
-            ),
-            Spacer(),
-            MaterialFullscreenButton(),
-          ],
-        ),
-        fullscreen: MaterialVideoControlsThemeData(
-          bottomButtonBar: [
-            Spacer(),
-            MaterialCustomButton(
-              onPressed: () async {
-                controller.player.pause();
-                screenshot = await player.screenshot();
-                // Show the screenshot in fullscreen mode
-                if (screenshot == null) {
-                  controller.player.play();
-                } else {
-                  Map<String, dynamic> ret = await showDialog(
-                    context: context,
-                    builder: (BuildContext context) {
-                      return ReminderDialog();
-                    },
-                  );
-                  if (ret['state'] == 'success') {
-                    var result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) =>
-                                FullScreenScreenshot(screenshot)));
-                    if (result != null) {
-                      sendScreenshotAndResult(
-                          screenshot!,
-                          result,
-                          global_current_detector['cam_source'],
-                          ret['time'],
-                          ret['text']);
-                    }
-                  }
-                }
-              },
-              icon: Icon(Icons.add_alert),
-            ),
-            MaterialCustomButton(
-              onPressed: () async {
-                controller.player.pause();
-                screenshot = await player.screenshot();
-              },
-              icon: Icon(Icons.security),
-            ),
-            MaterialCustomButton(
-              onPressed: () async {
-                showRecordPopupDialog(context);
-              },
-              icon: Icon(Icons.record_voice_over_outlined),
-            ),
-            Spacer(),
-            MaterialFullscreenButton(),
-          ],
-        ),
-        child: Scaffold(
-          body: SizedBox(
+      ),
+      body: Column(
+        children: [
+          SizedBox(
             width: MediaQuery.of(context).size.width,
-            height: MediaQuery.of(context).size.width * 0.5625,
-            child: Video(
-              controller: controller,
+            height: MediaQuery.of(context).size.height * 9.0 / 16.0,
+            // Use [Video] widget to display video output.
+            child: Video(controller: controller),
+          ),
+          SizedBox(height: 15),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Color.fromRGBO(54, 207, 201, 1)),
+            onPressed: () async {
+              // controller.player.pause();
+              screenshot = await player.screenshot();
+              // Show the screenshot in fullscreen mode
+              if (screenshot == null) {
+                controller.player.play();
+              } else {
+                Map<String, dynamic> ret = await showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return ReminderDialog();
+                  },
+                );
+                if (ret['state'] == 'success') {
+                  var result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              FullScreenScreenshot(screenshot)));
+                  if (result != null) {
+                    sendScreenshotAndResult(
+                        screenshot!,
+                        result,
+                        global_current_detector['cam_source'],
+                        ret['time'],
+                        ret['text']);
+                  }
+                }
+              }
+            },
+            child: Container(
+              height: 50,
+              child: FractionallySizedBox(
+                widthFactor: 0.8, // 设置宽度占父容器宽度的比例（50%）
+                child: Center(
+                  child: Text(
+                    '添加吃药提醒',
+                    style: TextStyle(color: Colors.white, fontSize: 22),
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
-      ) : MaterialDesktopVideoControlsTheme(
-      normal: MaterialDesktopVideoControlsThemeData(
-        // Modify theme options:
-        seekBarThumbColor: Colors.blue,
-        seekBarPositionColor: Colors.blue,
-        displaySeekBar: false,
-        // Modify bottom button bar:
-        bottomButtonBar: [
-          Spacer(),
-          MaterialCustomButton(
-            onPressed: () async {
-              controller.player.pause();
-              screenshot = await player.screenshot();
-              // Show the screenshot in fullscreen mode
-              if (screenshot == null) {
-                controller.player.play();
-              } else {
-                Map<String, dynamic> ret = await showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return ReminderDialog();
-                  },
-                );
-                if (ret['state'] == 'success') {
-                  var result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              FullScreenScreenshot(screenshot)));
-                  if (result != null) {
-                    sendScreenshotAndResult(
-                        screenshot!,
-                        result,
-                        global_current_detector['cam_source'],
-                        ret['time'],
-                        ret['text']);
-                  }
-                }
-              }
+          SizedBox(height: 15),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+            onPressed: () {
+              sendGetRecordsAndShow();
             },
-            icon: Icon(Icons.add_alert),
+            child: Container(
+              height: 50,
+              child: FractionallySizedBox(
+                widthFactor: 0.8, // 设置宽度占父容器宽度的比例（50%）
+                child: Center(
+                  child: Text(
+                    '录音选择',
+                    style: TextStyle(color: Colors.white, fontSize: 22),
+                  ),
+                ),
+              ),
+            ),
           ),
-          MaterialCustomButton(
-            onPressed: () async {
-              controller.player.pause();
-              screenshot = await player.screenshot();
-            },
-            icon: Icon(Icons.security),
-          ),
-          MaterialCustomButton(
-            onPressed: () async {
-              showRecordPopupDialog(context);
-            },
-            icon: Icon(Icons.record_voice_over_outlined),
-          ),
-          Spacer(),
-          MaterialFullscreenButton(),
         ],
       ),
-      fullscreen: MaterialDesktopVideoControlsThemeData(
-        bottomButtonBar: [
-          Spacer(),
-          MaterialCustomButton(
-            onPressed: () async {
-              controller.player.pause();
-              screenshot = await player.screenshot();
-              // Show the screenshot in fullscreen mode
-              if (screenshot == null) {
-                controller.player.play();
-              } else {
-                Map<String, dynamic> ret = await showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return ReminderDialog();
-                  },
-                );
-                if (ret['state'] == 'success') {
-                  var result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              FullScreenScreenshot(screenshot)));
-                  if (result != null) {
-                    sendScreenshotAndResult(
-                        screenshot!,
-                        result,
-                        global_current_detector['cam_source'],
-                        ret['time'],
-                        ret['text']);
-                  }
-                }
-              }
-            },
-            icon: Icon(Icons.add_alert),
-          ),
-          MaterialCustomButton(
-            onPressed: () async {
-              controller.player.pause();
-              screenshot = await player.screenshot();
-            },
-            icon: Icon(Icons.security),
-          ),
-          MaterialCustomButton(
-            onPressed: () async {
-              showRecordPopupDialog(context);
-            },
-            icon: Icon(Icons.record_voice_over_outlined),
-          ),
-          Spacer(),
-          MaterialFullscreenButton(),
-        ],
-      ),
-      child: Scaffold(
-        body: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.width * 0.5625,
-          child: Video(
-            controller: controller,
-          ),
-        ),
-      ),
-    ),
     );
   }
 
+  void sendGetRecordsAndShow(){
+    //cam2events
+    var url =
+    Uri.http(global_detector_server_address, global_url_get_records);
+    http
+        .post(url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': global_user_info['token'],
+        },
+        body: packet.getRecords(global_current_detector['cam_source']))
+        .then((http.Response response) {
+      final res = json.decode(response.body.toString());
+      if(res["state"]){
+        global_records = res['list'];
+        global_records.sort((a, b) {
+          double aValue = double.parse(p.basenameWithoutExtension(a).split('_')[2]);
+          double bValue = double.parse(p.basenameWithoutExtension(b).split('_')[2]);
+          if (aValue < bValue) {
+            return 1;
+          } else if (aValue > bValue) {
+            return -1;
+          } else {
+            return 0;
+          }
+        });
+        print(global_records);
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => RecordListPage()),
+        );
+      }else{
+        print(res);
+      }
+    });
+  }
   void sendScreenshotAndResult(Uint8List frame, List<Offset> rect,
       String camSource, String selectTime, String reminderName) async {
     // Convert Uint8List to base64-encoded string

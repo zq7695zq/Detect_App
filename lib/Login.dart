@@ -33,23 +33,28 @@ class _LoginPageState extends State<LoginPage> {
     _readFromStorage();
     return Scaffold(
         body: Container(
-      color: Color.fromRGBO(98, 178, 252, 1),
+      color: Color.fromRGBO(255, 255, 255, 1),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
             Padding(
-              padding: EdgeInsets.only(top: 100),
+              padding: EdgeInsets.only(top: 30),
               child: Image(
-                image: AssetImage('assets/images/login.png'),
-                width: 250,
-                height: 250,
+                image: AssetImage('assets/images/logo2.jpg'),
+                width: 320,
+                height: 320,
               ),
             ),
             Text(
-              '欢迎回来',
+              '关爱老人健康',
               style: TextStyle(
-                  color: Color.fromRGBO(70, 68, 68, 1), fontSize: 32, fontFamily: 'Poppins', fontWeight: FontWeight.bold, ),
+                  color: Color.fromRGBO(70, 68, 68, 1), fontSize: 24, fontFamily: '微软雅黑', fontWeight: FontWeight.w700, ),
+            ),
+            Text(
+              '让老人时刻不孤单',
+              style: TextStyle(
+                color: Color.fromRGBO(217, 217, 217, 1), fontSize: 14, fontFamily: '微软雅黑', fontWeight: FontWeight.w700, ),
             ),
             Container(
               child:
@@ -62,7 +67,7 @@ class _LoginPageState extends State<LoginPage> {
                       hintText: '账号',
                       filled: true,
                       fillColor: Colors.white,
-                      prefixIcon: Icon(Icons.person, color: Colors.blue),
+                      prefixIcon: Icon(Icons.person, color: Color.fromRGBO(54, 207, 201, 1)),
                     ),
                   ),
                   SizedBox(height: 20,),
@@ -72,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
                       hintText: '密码',
                       filled: true,
                       fillColor: Colors.white,
-                      prefixIcon: Icon(Icons.lock, color: Colors.blue),
+                      prefixIcon: Icon(Icons.lock, color: Color.fromRGBO(54, 207, 201, 1)),
                       suffixIcon: IconButton(
                         icon: Icon(Icons.visibility),
                         onPressed: () {
@@ -80,7 +85,7 @@ class _LoginPageState extends State<LoginPage> {
                             password_obscure = !password_obscure;
                           });
                         },
-                        color: Colors.blue,
+                        color: Color.fromRGBO(54, 207, 201, 1),
                       ),
                     ),
                     obscureText: password_obscure,
@@ -105,26 +110,26 @@ class _LoginPageState extends State<LoginPage> {
 
             ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+              style: ElevatedButton.styleFrom(backgroundColor: Color.fromRGBO(54, 207, 201, 1)),
               onPressed: () {
                 var url = Uri.http(global_server_address, global_url_login);
-                
-                print(packet.login(username_controller.text, password_controller.text));
                 http.post(url,
                     headers: <String, String>{
                       'Content-Type': 'application/json; charset=UTF-8',
                     },
                     body: packet.login(username_controller.text, password_controller.text))
                     .then((http.Response response){
-                      if (response.body.toString().isEmpty) {
+                      if (response.statusCode != 200) {
                         return;
                       }
                       final res = json.decode(response.body.toString());
                       String _content = "";
+                      bool isSuccess = false;
                       switch(res['state'])
                       {
                         case 'login_success':
                           print('登录成功');
+                          isSuccess = true;
                           global_storage.write(key: global_storage_label_username, value: username_controller.text);
                           global_storage.write(key: global_storage_label_password, value: password_controller.text);
                           global_user_info['email'] = res['user']['email'];
@@ -144,7 +149,7 @@ class _LoginPageState extends State<LoginPage> {
                           _content = "密码错误";
                           break;
                       }
-                      if(_content != "") {
+                      if(!isSuccess) {
                         showDialog(
                         context: context,
                         builder: (BuildContext context) {
@@ -170,7 +175,7 @@ class _LoginPageState extends State<LoginPage> {
                    );
               },
               child: Container(
-                  height: 60,
+                  height: 40,
                 child: FractionallySizedBox(
                   widthFactor: 0.8, // 设置宽度占父容器宽度的比例（50%）
                   child:Center(

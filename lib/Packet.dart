@@ -40,10 +40,11 @@ class packet
     return json.encode(post);
   }
 
-  static String cam2events(String cam_source)
+  static String cam2events(String cam_source, int page)
   {
     final post = {
       'cam_source': cam_source,
+      'page': page
     };
     return json.encode(post);
   }
@@ -76,6 +77,30 @@ class packet
   static String isRecording(String cam_source) {
     final post = {
       'cam_source': cam_source,
+    };
+    return json.encode(post);
+  }
+
+  static String getRecords(String cam_source) {
+    final post = {
+      'cam_source': cam_source,
+    };
+    return json.encode(post);
+  }
+
+  static String getWav(String cam_source, String file) {
+    final post = {
+      'cam_source': cam_source,
+      'file': file,
+    };
+    return json.encode(post);
+  }
+
+  static String addVoice(String cam_source, String file, String text) {
+    final post = {
+      'cam_source': cam_source,
+      'file': file,
+      'label': text,
     };
     return json.encode(post);
   }

@@ -6,6 +6,7 @@ import 'package:dondaApp/Login.dart';
 import 'package:dondaApp/addDetector.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:platform_local_notifications/platform_local_notifications.dart';
 
 import 'Global.dart';
 import 'Loop.dart';
@@ -64,6 +65,7 @@ class _HomePageState extends State<HomePage> {
                 if (global_detectors[i]['image'] != null) {
                   global_detectors[i]['image_'] =
                       MemoryImage(base64Decode(global_detectors[i]['image']));
+
                 } else {
                   global_detectors[i]['image_'] = Image.network(
                           "https://www.itying.com/images/flutter/1.png")
@@ -119,10 +121,10 @@ class _HomePageState extends State<HomePage> {
             },
             body: packet.getNotification(global_detectors[i]['cam_source']))
             .then((http.Response response) async {
-          if (response.body.toString().isEmpty) {
+          if (response.statusCode != 200) {
             return;
           }
-          final res = json.decode(response.body.toString());
+          Map<String, dynamic> res = json.decode(response.body.toString());
           print(res);
           if (res['state'] == 1 || res['state'] == "1") {
             if (context.mounted) {
@@ -130,13 +132,14 @@ class _HomePageState extends State<HomePage> {
                   !_stopwatch.isRunning) {
                 _stopwatch.reset();
                 _stopwatch.start();
-                // await PlatformNotifier.I.showPluginNotification(
-                //     ShowPluginNotificationModel(
-                //         id: DateTime.now().second,
-                //         title: "消息提示",
-                //         body: "检测到异常，状态：" + res['notification'],
-                //         payload: "test"),
-                //     context);
+                String text = res.containsKey('event_name') && res['event_name'].toString().isNotEmpty ? utf8.decode(base64Decode(res['event_name'])) : res['notification'];
+                await PlatformNotifier.I.showPluginNotification(
+                    ShowPluginNotificationModel(
+                        id: DateTime.now().second,
+                        title: "消息提示",
+                        body: "检测到异常，状态：$text",
+                        payload: "test"),
+                    context);
               }
             }
           }
@@ -161,7 +164,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Drawer Demo'),
+        title: Text('Donda'),
         leading: Builder(
           builder: (BuildContext context) {
             return IconButton(
@@ -215,7 +218,7 @@ class _HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               IconButton(
-                color: Color.fromRGBO(98, 178, 252, 1),
+                color: Color.fromRGBO(54, 207, 201, 1),
                 iconSize: 48,
                 icon: Icon(Icons.settings),
                 onPressed: () {
@@ -223,7 +226,7 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               IconButton(
-                color: Color.fromRGBO(98, 178, 252, 1),
+                color: Color.fromRGBO(54, 207, 201, 1),
                 iconSize: 48,
                 icon: Icon(Icons.cloud_download),
                 onPressed: () {
@@ -231,7 +234,7 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               IconButton(
-                color: Color.fromRGBO(98, 178, 252, 1),
+                color: Color.fromRGBO(54, 207, 201, 1),
                 iconSize: 48,
                 icon: Icon(Icons.refresh),
                 onPressed: () {
@@ -344,7 +347,7 @@ class _HomePageState extends State<HomePage> {
                 );
               },
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all(Color(0xFF62B2FC)),
+                backgroundColor: MaterialStateProperty.all(Color(0xFF36CFC9)),
                 shape: MaterialStateProperty.all(
                   RoundedRectangleBorder(
                     borderRadius: BorderRadius.only(

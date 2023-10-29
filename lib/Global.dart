@@ -1,4 +1,6 @@
+import 'dart:collection';
 import 'dart:convert';
+import 'dart:core';
 
 import 'package:convert/convert.dart';
 import 'package:crypto/crypto.dart';
@@ -16,6 +18,12 @@ const String global_login_server_ip = "donda_login.cpolar.top";//"10.0.2.2"
 const String global_login_server_port = "";
 
 const String global_server_address = global_login_server_ip;
+
+// const String global_login_server_ip = "127.0.0.1";//"10.0.2.2"
+//
+// const String global_login_server_port = "8080";
+//
+// const String global_server_address = global_login_server_ip + ":" + global_login_server_port;
 
 String global_detector_server_address = "";
 
@@ -47,6 +55,12 @@ const String global_url_detect_record = "/detect_record";
 
 const String global_url_is_recording = "/is_recording";
 
+const String global_url_get_records = "/get_records";
+
+const String global_url_get_wav = "/get_wav";
+
+const String global_url_add_voice = "/add_voice";
+
 // Create storage
 final global_storage = new FlutterSecureStorage();
 
@@ -59,6 +73,10 @@ var global_user_info = {};
 var global_detectors = [];
 
 List<Map<String, dynamic>> global_events = [];
+
+List<dynamic> global_records = [];
+
+Map<String, dynamic> global_records_loaded = HashMap();
 
 var global_current_detector;
 

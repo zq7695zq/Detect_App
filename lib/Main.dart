@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
       title: 'Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color.fromRGBO(98, 178, 252, 1)),
+            seedColor: const Color.fromRGBO(54, 207, 201, 1)),
         useMaterial3: true,
         fontFamily: 'alibaba',
       ),
@@ -57,26 +57,41 @@ class _MainPageState extends State<MainPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        color: Color.fromRGBO(98, 178, 252, 1),
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image:  AssetImage('assets/images/welcome.png'), // Replace with your image path
+            fit: BoxFit.cover,
+            opacity: 0.6,
+          ),
+        ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: <Widget>[
-              Padding(
-                padding: EdgeInsets.only(top: 100),
-                child: CircleAvatar(
-                  radius: 110, // 尺寸， 宽高一样， 代表的是半径，如果需要一个80x80尺寸的元素，那么配置为40即可
-                  backgroundImage: NetworkImage(
-                      "https://www.itying.com/images/flutter/1.png"), // 从接口中获取的图片的URL地址
-                ),
-              ),
-              Text(
-                '欢迎使用',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontFamily: 'Poppins'
-                ),
+              Column(
+                children: const [
+                  CircleAvatar(
+                    backgroundColor: Color.fromRGBO(255, 255, 255, 0),
+                    radius: 65, // 尺寸， 宽高一样， 代表的是半径，如果需要一个80x80尺寸的元素，那么配置为40即可
+                    backgroundImage: AssetImage('assets/images/app_logo.png'), // 从接口中获取的图片的URL地址
+                  ),
+                  Text(
+                    '动达家居',
+                    style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 36,
+                        fontFamily: '微软雅黑'
+                    ),
+                  ),
+                  Text(
+                    '您最好的私人管家',
+                    style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontFamily: 'PingFangSC'
+                    ),
+                  ),
+                ],
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -96,10 +111,10 @@ class _MainPageState extends State<MainPage> {
                             bottomLeft: Radius.circular(15),
                           ),
                         ),
-                        backgroundColor: Colors.black),
+                        backgroundColor: Color.fromRGBO(54, 207, 201, 1)),
                     child: Container(
-                      width: 170,
-                      height: 60,
+                      width: 150,
+                      height: 40,
                       child: Center(
                           child: Text(
                         '登录',
@@ -124,8 +139,8 @@ class _MainPageState extends State<MainPage> {
                       ),
                     ),
                     child: Container(
-                      width: 170,
-                      height: 60,
+                      width: 150,
+                      height: 40,
                       child: Center(
                           child: Text(
                         '注册',

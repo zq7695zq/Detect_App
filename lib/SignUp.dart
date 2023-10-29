@@ -22,7 +22,7 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         body: Container(
-      color: Color.fromRGBO(98, 178, 252, 1),
+      color: Color.fromRGBO(54, 207, 201, 1),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -110,8 +110,20 @@ class _SignUpPageState extends State<SignUpPage> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
               onPressed: () {
+                bool isSend = false;
+                String _content = "";
+                if(!checkEmail(email_controller.text)){
+                  _content = "邮箱格式错误";
+                }else if(username_controller.text.isEmpty){
+                  _content = "用户名不能为空";
+                }else if(password_controller.text.isEmpty){
+                  _content = "密码不能为空";
+                }else{
+                  isSend = true;
+                }
                 var url = Uri.http(global_server_address, global_url_register);
-                http
+                if(isSend) {
+                  http
                     .post(url,
                         headers: <String, String>{
                           'Content-Type': 'application/json; charset=UTF-8',
@@ -163,6 +175,28 @@ class _SignUpPageState extends State<SignUpPage> {
                       );
                     }
                 );
+                }else{
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('提示',
+                          style: TextStyle(fontSize: 15),),
+                        content: Text(_content,
+                          style: TextStyle(fontSize: 25),),
+                        actions: <Widget>[
+                          TextButton(
+                            child: Text('确定',
+                              style: TextStyle(fontSize: 20),),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                }
               },
               child: Container(
                 height: 60,
@@ -182,4 +216,16 @@ class _SignUpPageState extends State<SignUpPage> {
       ),
     ));
   }
+}
+
+
+bool checkEmail(String input) {
+
+  if (input == null || input.isEmpty) return false;
+
+  // 邮箱正则
+
+  String regexEmail = "^\\w+([-+.]\\w+)*@\\w+([-.]\\w+)*\\.\\w+([-.]\\w+)*\$";
+
+  return RegExp(regexEmail).hasMatch(input);
 }

@@ -32,12 +32,13 @@ class _ImagesPopupState extends State<ImagesPopup> with SingleTickerProviderStat
         key: UniqueKey(), // Use a unique key associated with the image data
       ));
     }
+    if(images!.length > 0){
+      int timePerImageInMilliseconds = (4000 / images!.length).round();
 
-    int timePerImageInMilliseconds = (4000 / images!.length).round();
-
-    Future.delayed(Duration(milliseconds: 200), () {
-      _updateImage(images!.length, Duration(milliseconds: timePerImageInMilliseconds));
-    });
+      Future.delayed(Duration(milliseconds: 200), () {
+        _updateImage(images!.length, Duration(milliseconds: timePerImageInMilliseconds));
+      });
+    }
   }
 
   _updateImage(int count, Duration millisecond) {
@@ -58,6 +59,7 @@ class _ImagesPopupState extends State<ImagesPopup> with SingleTickerProviderStat
     _disposed = true;
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     return Center(

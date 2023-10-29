@@ -71,7 +71,7 @@ class _addDetectorPageState extends State<addDetectorPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         body: Container(
-      color: Color.fromRGBO(98, 178, 252, 1),
+      color: Color.fromRGBO(54, 207, 201, 1),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,

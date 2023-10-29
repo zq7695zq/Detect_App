@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
-
 import 'package:dondaApp/Stream.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:dondaApp/EventView.dart';
 import 'Global.dart';
 import 'Packet.dart';
+
+import 'package:archive/archive.dart';
 
 class DetectorPage extends StatefulWidget {
   const DetectorPage({super.key});
@@ -80,7 +80,7 @@ class _DetectorPageState extends State<DetectorPage> {
           Container(
             height: imageHeight, width: imageWidth, // 设置图片宽度为屏幕宽度的80%
             decoration: BoxDecoration(
-              // border: Border.all(color: Colors.blue, width: 2),
+              // border: Border.all(color: Color.fromRGBO(54, 207, 201, 1), width: 2),
               image: DecorationImage(
                 fit: BoxFit.cover,
                 image: global_current_detector['image_'],
@@ -89,7 +89,7 @@ class _DetectorPageState extends State<DetectorPage> {
           ),
           SizedBox(height: 10),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+            style: ElevatedButton.styleFrom(backgroundColor: Color.fromRGBO(54, 207, 201, 1)),
             onPressed: () {
               Navigator.push(
                 context,
@@ -115,6 +115,7 @@ class _DetectorPageState extends State<DetectorPage> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
             onPressed: () {
               //cam2events
+              print(packet.cam2events(global_current_detector['cam_source'], 1));
               var url =
               Uri.http(global_detector_server_address, global_url_cam2events);
               http
@@ -123,9 +124,11 @@ class _DetectorPageState extends State<DetectorPage> {
                     'Content-Type': 'application/json; charset=UTF-8',
                     'Authorization': global_user_info['token'],
                   },
-                  body: packet.cam2events(global_current_detector['cam_source']))
+                  body: packet.cam2events(global_current_detector['cam_source'], 1))
                   .then((http.Response response) {
-                final res = json.decode(response.body.toString());
+                List<int> decompressedData = GZipDecoder().decodeBytes(response.bodyBytes);
+                String responseBody = utf8.decode(decompressedData);
+                final res = json.decode(responseBody.toString());
                 String _content = "";
                 global_events.clear();
                 switch (res["state"]) {
@@ -133,6 +136,17 @@ class _DetectorPageState extends State<DetectorPage> {
                     for(int i = 0; i < res["events"].length;i++) {
                       global_events.add(res["events"][i]);
                     }
+                    // 反转
+                    global_events = global_events.reversed.toList();
+                    global_events.forEach((element) {
+                      element['cover'] = Image.memory(
+                        base64Decode(element['cover_frame']),
+                        key: UniqueKey(), // Use a unique key associated with the image data
+                      );
+                    });
+                    global_events.forEach((element) {
+                      print(element['cover']);
+                    });
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => EventViewPage()),
@@ -185,6 +199,7 @@ class _DetectorPageState extends State<DetectorPage> {
               ),
             ),
           ),
+
         ],
       ),
     );
